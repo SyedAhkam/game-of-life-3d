@@ -3,6 +3,7 @@ use std::cell;
 use bevy::{prelude::*, window::PresentMode};
 use bevy_flycam::prelude::*;
 use itertools::iproduct;
+use rand::seq::SliceRandom;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -17,6 +18,7 @@ const CELL_ALIVE_COLOR: Color = Color::srgb(0.8, 0.7, 0.6);
 const CELL_DEAD_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 const PLANE_COLOR: Color = Color::srgb(0.3, 0.5, 0.3);
 
+#[derive(Clone)]
 enum CellState {
     ALIVE,
     DEAD,
@@ -42,21 +44,30 @@ fn setup_cells(
 ) {
     let neg_canvas = -CANVAS_SIZE;
     let cell_half_size = (CELL_SIZE / 2) as f32;
+    let mut rng = rand::thread_rng();
+
     for (x, z) in iproduct!(
         (neg_canvas..CANVAS_SIZE).step_by((CELL_SIZE + CELL_GAP) as usize),
         (neg_canvas..CANVAS_SIZE).step_by((CELL_SIZE + CELL_GAP) as usize)
     ) {
+        let cell_state = [CellState::ALIVE, CellState::DEAD]
+            .choose(&mut rng)
+            .unwrap();
+
         commands.spawn(CellBundle {
             pbr: PbrBundle {
                 mesh: meshes.add(Cuboid::from_length(CELL_SIZE as f32)),
-                material: materials.add(CELL_ALIVE_COLOR),
+                material: materials.add(match cell_state {
+                    CellState::ALIVE => CELL_ALIVE_COLOR,
+                    CellState::DEAD => CELL_DEAD_COLOR,
+                }),
                 transform: Transform::from_xyz(x as f32, cell_half_size, z as f32),
                 ..Default::default()
             },
             marker: Cell {
                 x,
                 z,
-                state: CellState::ALIVE,
+                state: cell_state.clone(),
             },
         });
     }
