@@ -13,13 +13,20 @@ const CELL_SIZE: i32 = 4;
 const CELL_GAP: i32 = 1;
 const CELLS_ON_CANVAS: i32 = (CANVAS_SIZE / CELL_SIZE).pow(2);
 
-const CELL_COLOR: Color = Color::srgb(0.8, 0.7, 0.6);
+const CELL_ALIVE_COLOR: Color = Color::srgb(0.8, 0.7, 0.6);
+const CELL_DEAD_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 const PLANE_COLOR: Color = Color::srgb(0.3, 0.5, 0.3);
+
+enum CellState {
+    ALIVE,
+    DEAD,
+}
 
 #[derive(Component)]
 struct Cell {
     x: i32,
     z: i32,
+    state: CellState,
 }
 
 #[derive(Bundle)]
@@ -42,11 +49,15 @@ fn setup_cells(
         commands.spawn(CellBundle {
             pbr: PbrBundle {
                 mesh: meshes.add(Cuboid::from_length(CELL_SIZE as f32)),
-                material: materials.add(CELL_COLOR),
+                material: materials.add(CELL_ALIVE_COLOR),
                 transform: Transform::from_xyz(x as f32, cell_half_size, z as f32),
                 ..Default::default()
             },
-            marker: Cell { x, z },
+            marker: Cell {
+                x,
+                z,
+                state: CellState::ALIVE,
+            },
         });
     }
 }
