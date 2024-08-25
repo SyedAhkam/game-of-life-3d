@@ -7,12 +7,25 @@ use itertools::iproduct;
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+const PLANE_SIZE: i32 = 48;
 const CANVAS_SIZE: i32 = 32;
 const CELL_SIZE: i32 = 4;
 const CELLS_ON_CANVAS: i32 = (CANVAS_SIZE / CELL_SIZE).pow(2);
 
 const CELL_COLOR: Color = Color::srgb(0.8, 0.7, 0.6);
-const CANVAS_COLOR: Color = Color::srgb(0.3, 0.5, 0.3);
+const PLANE_COLOR: Color = Color::srgb(0.3, 0.5, 0.3);
+
+#[derive(Component)]
+struct Cell {
+    x: i32,
+    z: i32,
+}
+
+#[derive(Bundle)]
+struct CellBundle {
+    pbr: PbrBundle,
+    marker: Cell,
+}
 
 fn setup_cells(
     mut commands: Commands,
@@ -25,11 +38,14 @@ fn setup_cells(
         (neg_canvas..CANVAS_SIZE).step_by(CELL_SIZE as usize),
         (neg_canvas..CANVAS_SIZE).step_by(CELL_SIZE as usize)
     ) {
-        commands.spawn(PbrBundle {
-            mesh: meshes.add(Cuboid::from_length(CELL_SIZE as f32)),
-            material: materials.add(CELL_COLOR),
-            transform: Transform::from_xyz(x as f32, cell_half_size, z as f32),
-            ..Default::default()
+        commands.spawn(CellBundle {
+            pbr: PbrBundle {
+                mesh: meshes.add(Cuboid::from_length(CELL_SIZE as f32)),
+                material: materials.add(CELL_COLOR),
+                transform: Transform::from_xyz(x as f32, cell_half_size, z as f32),
+                ..Default::default()
+            },
+            marker: Cell { x, z },
         });
     }
 }
@@ -41,8 +57,8 @@ fn setup(
 ) {
     // Plane
     commands.spawn((PbrBundle {
-        mesh: meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(CANVAS_SIZE as f32))),
-        material: materials.add(CANVAS_COLOR),
+        mesh: meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(PLANE_SIZE as f32))),
+        material: materials.add(PLANE_COLOR),
         ..Default::default()
     },));
 
