@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.14.1", features = ["dynamic_linking"] }
 bevy_flycam = "0.14.1"
+itertools = "0.13.0"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
