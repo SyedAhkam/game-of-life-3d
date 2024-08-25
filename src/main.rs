@@ -10,6 +10,7 @@ const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 const PLANE_SIZE: i32 = 48;
 const CANVAS_SIZE: i32 = 32;
 const CELL_SIZE: i32 = 4;
+const CELL_GAP: i32 = 1;
 const CELLS_ON_CANVAS: i32 = (CANVAS_SIZE / CELL_SIZE).pow(2);
 
 const CELL_COLOR: Color = Color::srgb(0.8, 0.7, 0.6);
@@ -35,8 +36,8 @@ fn setup_cells(
     let neg_canvas = -CANVAS_SIZE;
     let cell_half_size = (CELL_SIZE / 2) as f32;
     for (x, z) in iproduct!(
-        (neg_canvas..CANVAS_SIZE).step_by(CELL_SIZE as usize),
-        (neg_canvas..CANVAS_SIZE).step_by(CELL_SIZE as usize)
+        (neg_canvas..CANVAS_SIZE).step_by((CELL_SIZE + CELL_GAP) as usize),
+        (neg_canvas..CANVAS_SIZE).step_by((CELL_SIZE + CELL_GAP) as usize)
     ) {
         commands.spawn(CellBundle {
             pbr: PbrBundle {
