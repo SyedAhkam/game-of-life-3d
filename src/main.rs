@@ -1,4 +1,4 @@
-use bevy::{app::Plugins, prelude::*, window::PresentMode};
+use bevy::{prelude::*, window::PresentMode};
 use bevy_flycam::prelude::*;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
@@ -46,7 +46,7 @@ fn setup(
 
     // light
     commands.spawn(PointLightBundle {
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        transform: Transform::from_xyz(10.0, 8.0, 4.0),
         ..Default::default()
     });
 
