@@ -8,6 +8,8 @@ use rand::seq::SliceRandom;
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+const TIME_STEP: u64 = 500; // in millis
+
 const PLANE_SIZE: i32 = 48;
 const CANVAS_SIZE: i32 = 32;
 const CELL_SIZE: i32 = 4;
@@ -246,10 +248,13 @@ fn main() {
             ..default()
         }))
         .add_plugins(PlayerPlugin)
+        .insert_resource(Time::<Fixed>::from_duration(
+            std::time::Duration::from_millis(TIME_STEP),
+        ))
         .add_systems(Startup, setup)
         .add_systems(Startup, setup_cells)
         .add_systems(Startup, setup_states.after(setup_cells))
-        .add_systems(Update, neighbor_update)
-        .add_systems(Update, cell_update.after(neighbor_update))
+        .add_systems(FixedUpdate, neighbor_update)
+        .add_systems(FixedUpdate, cell_update.after(neighbor_update))
         .run();
 }
