@@ -19,7 +19,7 @@ const CELL_GAP: i32 = 1;
 const _CELLS_ON_CANVAS: i32 = (CANVAS_SIZE / CELL_SIZE).pow(2);
 
 const CELL_ALIVE_COLOR: Color = Color::srgb(0.9, 0., 0.);
-const CELL_DEAD_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
+const CELL_DEAD_COLOR: Color = Color::srgb(0.9, 0.9, 0.9); // or use Color::NONE to make dead cells disappear
 const PLANE_COLOR: Color = Color::srgb(0.3, 0.5, 0.3);
 
 #[derive(Component, Debug, Clone, PartialEq)]
