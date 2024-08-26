@@ -54,18 +54,17 @@ fn cell_update(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (_, mut state, neighbors, material_handle) in query.iter_mut() {
-        let mut new_state = state.clone();
-        match *state {
+        let new_state = match *state {
             CellState::ALIVE => match neighbors.0 {
-                0..=1 => new_state = CellState::DEAD,
-                2..=3 => new_state = CellState::ALIVE,
-                _ => new_state = CellState::DEAD,
+                0..=1 => CellState::DEAD,
+                2..=3 => CellState::ALIVE,
+                _ => CellState::DEAD,
             },
             CellState::DEAD => match neighbors.0 {
-                3 => new_state = CellState::ALIVE,
-                _ => new_state = CellState::DEAD,
+                3 => CellState::ALIVE,
+                _ => CellState::DEAD,
             },
-        }
+        };
 
         if new_state != *state {
             debug!("state changed: {:?} --> {:?}", *state, new_state);
