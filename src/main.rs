@@ -49,6 +49,20 @@ struct CellBundle {
     neighbors: Neighbors,
 }
 
+#[derive(Event, Default)]
+struct RandomCellStates;
+
+fn input_actions(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut ev_random_cell_state: EventWriter<RandomCellStates>,
+) {
+    if keys.just_pressed(KeyCode::KeyR) {
+        info!("> regenerating cell states");
+
+        ev_random_cell_state.send_default();
+    }
+}
+
 fn cell_update(
     mut query: Query<(&Cell, &mut CellState, &Neighbors, &Handle<StandardMaterial>)>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -152,24 +166,27 @@ fn neighbor_update(
     }
 }
 
-fn setup_states(
+fn random_cell_states(
+    mut ev: EventReader<RandomCellStates>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(&Cell, &mut CellState, &Handle<StandardMaterial>)>,
 ) {
-    let mut rng = rand::thread_rng();
+    for _ in ev.read() {
+        let mut rng = rand::thread_rng();
 
-    for (_, mut state, material_handle) in query.iter_mut() {
-        let new_cell_state = [CellState::ALIVE, CellState::DEAD]
-            .choose(&mut rng)
-            .unwrap();
+        for (_, mut state, material_handle) in query.iter_mut() {
+            let new_cell_state = [CellState::ALIVE, CellState::DEAD]
+                .choose(&mut rng)
+                .unwrap();
 
-        let material = materials.get_mut(material_handle).unwrap();
-        material.base_color = match new_cell_state {
-            CellState::ALIVE => CELL_ALIVE_COLOR,
-            CellState::DEAD => CELL_DEAD_COLOR,
-        };
+            let material = materials.get_mut(material_handle).unwrap();
+            material.base_color = match new_cell_state {
+                CellState::ALIVE => CELL_ALIVE_COLOR,
+                CellState::DEAD => CELL_DEAD_COLOR,
+            };
 
-        *state = new_cell_state.to_owned();
+            *state = new_cell_state.to_owned();
+        }
     }
 }
 
@@ -177,6 +194,7 @@ fn setup_cells(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut ev_random_cell_state: EventWriter<RandomCellStates>,
 ) {
     let neg_canvas = -CANVAS_SIZE;
     let cell_half_size = (CELL_SIZE / 2) as f32;
@@ -198,6 +216,9 @@ fn setup_cells(
             neighbors: Neighbors(0),
         });
     }
+
+    // After spawing all cells, issue event to randomly assign cell states
+    ev_random_cell_state.send_default();
 }
 
 fn setup(
@@ -238,6 +259,7 @@ fn setup(
     info!("Use Left Shift and Spacebar for vertical movement");
     info!("Use the mouse to look around");
     info!("Press Esc to hide or show the mouse cursor");
+    info!("Press R to regenerate cells");
 }
 
 fn main() {
@@ -260,10 +282,12 @@ fn main() {
         .insert_resource(Time::<Fixed>::from_duration(
             std::time::Duration::from_millis(TIME_STEP),
         ))
+        .add_event::<RandomCellStates>()
         .add_systems(Startup, setup)
         .add_systems(Startup, setup_cells)
-        .add_systems(Startup, setup_states.after(setup_cells))
         .add_systems(FixedUpdate, neighbor_update)
         .add_systems(FixedUpdate, cell_update.after(neighbor_update))
+        .add_systems(Update, random_cell_states)
+        .add_systems(Update, input_actions)
         .run();
 }
