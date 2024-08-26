@@ -18,23 +18,54 @@ const CELL_ALIVE_COLOR: Color = Color::srgb(0.8, 0.7, 0.6);
 const CELL_DEAD_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 const PLANE_COLOR: Color = Color::srgb(0.3, 0.5, 0.3);
 
-#[derive(Clone)]
+#[derive(Component, Debug, Clone)]
 enum CellState {
     ALIVE,
     DEAD,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Cell {
     x: i32,
     z: i32,
-    state: CellState,
 }
 
 #[derive(Bundle)]
 struct CellBundle {
     pbr: PbrBundle,
     marker: Cell,
+    state: CellState,
+}
+
+fn state_update(cells_query: Query<(&Cell, &CellState), Changed<CellState>>) {
+    // eprintln!("Cell state update");
+
+    // let cells = cells_query.iter().collect::<Vec<&Cell>>();
+
+    // for cell in cells {}
+    // TODO
+}
+
+fn setup_states(
+    mut commands: Commands,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    cells_query: Query<(&Cell, &mut CellState, &Handle<StandardMaterial>)>,
+) {
+    let mut rng = rand::thread_rng();
+
+    for (cell, mut state, material_handle) in cells_query.iter() {
+        let new_cell_state = [CellState::ALIVE, CellState::DEAD]
+            .choose(&mut rng)
+            .unwrap();
+
+        let material = materials.get_mut(material_handle).unwrap();
+        material.base_color = match new_cell_state {
+            CellState::ALIVE => CELL_ALIVE_COLOR,
+            CellState::DEAD => CELL_DEAD_COLOR,
+        };
+
+        state = new_cell_state;
+    }
 }
 
 fn setup_cells(
@@ -44,31 +75,20 @@ fn setup_cells(
 ) {
     let neg_canvas = -CANVAS_SIZE;
     let cell_half_size = (CELL_SIZE / 2) as f32;
-    let mut rng = rand::thread_rng();
 
     for (x, z) in iproduct!(
         (neg_canvas..CANVAS_SIZE).step_by((CELL_SIZE + CELL_GAP) as usize),
         (neg_canvas..CANVAS_SIZE).step_by((CELL_SIZE + CELL_GAP) as usize)
     ) {
-        let cell_state = [CellState::ALIVE, CellState::DEAD]
-            .choose(&mut rng)
-            .unwrap();
-
         commands.spawn(CellBundle {
             pbr: PbrBundle {
                 mesh: meshes.add(Cuboid::from_length(CELL_SIZE as f32)),
-                material: materials.add(match cell_state {
-                    CellState::ALIVE => CELL_ALIVE_COLOR,
-                    CellState::DEAD => CELL_DEAD_COLOR,
-                }),
+                material: materials.add(CELL_DEAD_COLOR),
                 transform: Transform::from_xyz(x as f32, cell_half_size, z as f32),
                 ..Default::default()
             },
-            marker: Cell {
-                x,
-                z,
-                state: cell_state.clone(),
-            },
+            marker: Cell { x, z },
+            state: CellState::DEAD,
         });
     }
 }
@@ -121,5 +141,7 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .add_systems(Startup, setup)
         .add_systems(Startup, setup_cells)
+        .add_systems(Startup, setup_states.after(setup_cells))
+        .add_systems(Update, state_update)
         .run();
 }
