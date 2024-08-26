@@ -1,8 +1,6 @@
-use std::cell;
-
 use bevy::{
     prelude::*,
-    window::{PresentMode, WindowMode, WindowResolution},
+    window::{PresentMode, WindowMode},
 };
 use bevy_flycam::prelude::*;
 use itertools::iproduct;
@@ -18,7 +16,7 @@ const PLANE_SIZE: i32 = 48;
 const CANVAS_SIZE: i32 = 32;
 const CELL_SIZE: i32 = 4;
 const CELL_GAP: i32 = 1;
-const CELLS_ON_CANVAS: i32 = (CANVAS_SIZE / CELL_SIZE).pow(2);
+const _CELLS_ON_CANVAS: i32 = (CANVAS_SIZE / CELL_SIZE).pow(2);
 
 const CELL_ALIVE_COLOR: Color = Color::srgb(0.9, 0., 0.);
 const CELL_DEAD_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
@@ -70,7 +68,7 @@ fn cell_update(
         }
 
         if new_state != *state {
-            info!("state changed: {:?} --> {:?}", *state, new_state);
+            debug!("state changed: {:?} --> {:?}", *state, new_state);
 
             let material = materials.get_mut(material_handle).unwrap();
 
@@ -148,23 +146,20 @@ fn neighbor_update(
     mut query: Query<(&Cell, &Position, &CellState, &mut Neighbors)>,
     readonly: Query<(&Position, &CellState)>,
 ) {
-    for (_, pos, state, mut neighbors) in query.iter_mut() {
+    for (_, pos, _, mut neighbors) in query.iter_mut() {
         let calculated = count_neighbors(pos, &readonly);
 
         *neighbors = calculated;
-
-        // info!("{:?}::{:?} -- {:?}", pos, state, neighbors);
     }
 }
 
 fn setup_states(
-    mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(&Cell, &mut CellState, &Handle<StandardMaterial>)>,
 ) {
     let mut rng = rand::thread_rng();
 
-    for (cell, mut state, material_handle) in query.iter_mut() {
+    for (_, mut state, material_handle) in query.iter_mut() {
         let new_cell_state = [CellState::ALIVE, CellState::DEAD]
             .choose(&mut rng)
             .unwrap();
@@ -214,7 +209,7 @@ fn setup(
     // Camera
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_xyz((-(PLANE_SIZE * 2) as f32), 50.0, 0.)
+            transform: Transform::from_xyz(-(PLANE_SIZE * 2) as f32, 50.0, 0.)
                 .looking_at(Vec3::new(0., 0., 0.), Vec3::X),
             ..Default::default()
         },
@@ -250,7 +245,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: APP_NAME.into(),
+                title: format!("{} v{}", APP_NAME, APP_VERSION),
                 resolution: WINDOW_RESOLUTION.into(),
                 present_mode: PresentMode::AutoVsync,
                 mode: WindowMode::Fullscreen,
