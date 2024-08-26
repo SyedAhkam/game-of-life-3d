@@ -18,42 +18,115 @@ const CELL_ALIVE_COLOR: Color = Color::srgb(0.8, 0.7, 0.6);
 const CELL_DEAD_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 const PLANE_COLOR: Color = Color::srgb(0.3, 0.5, 0.3);
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, PartialEq)]
 enum CellState {
     ALIVE,
     DEAD,
 }
 
-#[derive(Component, Debug)]
-struct Cell {
+#[derive(Component, Debug, PartialEq)]
+struct Position {
     x: i32,
     z: i32,
 }
+
+#[derive(Component, Debug)]
+struct Neighbors(i64);
+
+#[derive(Component, Debug)]
+struct Cell;
 
 #[derive(Bundle)]
 struct CellBundle {
     pbr: PbrBundle,
     marker: Cell,
     state: CellState,
+    position: Position,
+    neighbors: Neighbors,
 }
 
-fn state_update(cells_query: Query<(&Cell, &CellState), Changed<CellState>>) {
-    // eprintln!("Cell state update");
+fn count_neighbors(
+    target_pos: &Position,
+    query: Query<(&Cell, &Position, &CellState, &Neighbors)>,
+) -> Neighbors {
+    let mut result = 0;
 
-    // let cells = cells_query.iter().collect::<Vec<&Cell>>();
+    let offset = CELL_SIZE + CELL_GAP;
+    let possible_neighbor_positions = [
+        // Up
+        Position {
+            x: target_pos.x + offset,
+            z: target_pos.z,
+        },
+        // Up left
+        Position {
+            x: target_pos.x + offset,
+            z: target_pos.z - offset,
+        },
+        // Up right
+        Position {
+            x: target_pos.x + offset,
+            z: target_pos.z + offset,
+        },
+        // Bottom
+        Position {
+            x: target_pos.x - offset,
+            z: target_pos.z,
+        },
+        // Bottom left
+        Position {
+            x: target_pos.x - offset,
+            z: target_pos.z - offset,
+        },
+        // Bottom right
+        Position {
+            x: target_pos.x - offset,
+            z: target_pos.z + offset,
+        },
+        // Left
+        Position {
+            x: target_pos.x,
+            z: target_pos.z - offset,
+        },
+        // Right
+        Position {
+            x: target_pos.x,
+            z: target_pos.z + offset,
+        },
+    ];
 
-    // for cell in cells {}
-    // TODO
+    // info!("{:?} -- {:?}", target_pos, possible_positions);
+
+    for (_, pos, state, _) in query.iter() {
+        if pos != target_pos
+            && possible_neighbor_positions.contains(pos)
+            && state == &CellState::ALIVE
+        {
+            result += 1;
+        }
+    }
+
+    Neighbors(result)
+}
+
+fn neighbor_update(query: Query<(&Cell, &Position, &CellState, &mut Neighbors)>) {
+    for (_, pos, state, mut neighbors) in query.iter() {
+        let calculated = &count_neighbors(pos, query.to_readonly());
+
+        neighbors = calculated;
+
+        info!("{:?}::{:?} -- {:?}", pos, state, neighbors);
+    }
 }
 
 fn setup_states(
     mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    cells_query: Query<(&Cell, &mut CellState, &Handle<StandardMaterial>)>,
+    mut query: Query<(&Cell, &mut CellState, &Handle<StandardMaterial>)>,
 ) {
     let mut rng = rand::thread_rng();
 
-    for (cell, mut state, material_handle) in cells_query.iter() {
+    for (cell, mut state, material_handle) in query.iter_mut() {
         let new_cell_state = [CellState::ALIVE, CellState::DEAD]
             .choose(&mut rng)
             .unwrap();
@@ -64,7 +137,7 @@ fn setup_states(
             CellState::DEAD => CELL_DEAD_COLOR,
         };
 
-        state = new_cell_state;
+        *state = new_cell_state.to_owned();
     }
 }
 
@@ -87,8 +160,10 @@ fn setup_cells(
                 transform: Transform::from_xyz(x as f32, cell_half_size, z as f32),
                 ..Default::default()
             },
-            marker: Cell { x, z },
+            marker: Cell,
             state: CellState::DEAD,
+            position: Position { x, z },
+            neighbors: Neighbors(0),
         });
     }
 }
@@ -142,6 +217,6 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(Startup, setup_cells)
         .add_systems(Startup, setup_states.after(setup_cells))
-        .add_systems(Update, state_update)
+        .add_systems(Update, neighbor_update)
         .run();
 }
