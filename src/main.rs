@@ -1,12 +1,16 @@
 use std::cell;
 
-use bevy::{prelude::*, window::PresentMode};
+use bevy::{
+    prelude::*,
+    window::{PresentMode, WindowMode, WindowResolution},
+};
 use bevy_flycam::prelude::*;
 use itertools::iproduct;
 use rand::seq::SliceRandom;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+const WINDOW_RESOLUTION: (f32, f32) = (1920., 1080.);
 
 const TIME_STEP: u64 = 500; // in millis
 
@@ -237,8 +241,9 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: APP_NAME.into(),
-                resolution: (700., 500.).into(),
+                resolution: WINDOW_RESOLUTION.into(),
                 present_mode: PresentMode::AutoVsync,
+                mode: WindowMode::Fullscreen,
                 // Tells wasm to resize the window according to the available canvas
                 // fit_canvas_to_parent: true,
                 // Tells wasm not to override default event handling, like F5, Ctrl+R etc.
