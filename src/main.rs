@@ -14,7 +14,7 @@ const CELL_SIZE: i32 = 4;
 const CELL_GAP: i32 = 1;
 const CELLS_ON_CANVAS: i32 = (CANVAS_SIZE / CELL_SIZE).pow(2);
 
-const CELL_ALIVE_COLOR: Color = Color::srgb(0.8, 0.7, 0.6);
+const CELL_ALIVE_COLOR: Color = Color::srgb(0.9, 0., 0.);
 const CELL_DEAD_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 const PLANE_COLOR: Color = Color::srgb(0.3, 0.5, 0.3);
 
@@ -45,10 +45,39 @@ struct CellBundle {
     neighbors: Neighbors,
 }
 
-fn count_neighbors(
-    target_pos: &Position,
-    query: Query<(&Cell, &Position, &CellState, &Neighbors)>,
-) -> Neighbors {
+fn cell_update(
+    mut query: Query<(&Cell, &mut CellState, &Neighbors, &Handle<StandardMaterial>)>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for (_, mut state, neighbors, material_handle) in query.iter_mut() {
+        let mut new_state = state.clone();
+        match *state {
+            CellState::ALIVE => match neighbors.0 {
+                0..=1 => new_state = CellState::DEAD,
+                2..=3 => new_state = CellState::ALIVE,
+                _ => new_state = CellState::DEAD,
+            },
+            CellState::DEAD => match neighbors.0 {
+                3 => new_state = CellState::ALIVE,
+                _ => new_state = CellState::DEAD,
+            },
+        }
+
+        if new_state != *state {
+            info!("state changed: {:?} --> {:?}", *state, new_state);
+
+            let material = materials.get_mut(material_handle).unwrap();
+
+            material.base_color = match new_state {
+                CellState::ALIVE => CELL_ALIVE_COLOR,
+                CellState::DEAD => CELL_DEAD_COLOR,
+            };
+            *state = new_state;
+        }
+    }
+}
+
+fn count_neighbors(target_pos: &Position, query: &Query<(&Position, &CellState)>) -> Neighbors {
     let mut result = 0;
 
     let offset = CELL_SIZE + CELL_GAP;
@@ -97,7 +126,7 @@ fn count_neighbors(
 
     // info!("{:?} -- {:?}", target_pos, possible_positions);
 
-    for (_, pos, state, _) in query.iter() {
+    for (pos, state) in query.iter() {
         if pos != target_pos
             && possible_neighbor_positions.contains(pos)
             && state == &CellState::ALIVE
@@ -109,13 +138,16 @@ fn count_neighbors(
     Neighbors(result)
 }
 
-fn neighbor_update(query: Query<(&Cell, &Position, &CellState, &mut Neighbors)>) {
-    for (_, pos, state, mut neighbors) in query.iter() {
-        let calculated = &count_neighbors(pos, query.to_readonly());
+fn neighbor_update(
+    mut query: Query<(&Cell, &Position, &CellState, &mut Neighbors)>,
+    readonly: Query<(&Position, &CellState)>,
+) {
+    for (_, pos, state, mut neighbors) in query.iter_mut() {
+        let calculated = count_neighbors(pos, &readonly);
 
-        neighbors = calculated;
+        *neighbors = calculated;
 
-        info!("{:?}::{:?} -- {:?}", pos, state, neighbors);
+        // info!("{:?}::{:?} -- {:?}", pos, state, neighbors);
     }
 }
 
@@ -218,5 +250,6 @@ fn main() {
         .add_systems(Startup, setup_cells)
         .add_systems(Startup, setup_states.after(setup_cells))
         .add_systems(Update, neighbor_update)
+        .add_systems(Update, cell_update.after(neighbor_update))
         .run();
 }
