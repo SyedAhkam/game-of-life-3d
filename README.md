@@ -4,6 +4,12 @@ Yet another [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Gam
 
 > Written in Rust using [Bevy](https://bevyengine.org).
 
+## Sneak Peak
+
+![game-of-life-3d-demo-0001](https://github.com/user-attachments/assets/77d279ea-18a4-405e-9e7f-88051923b788)
+![game-of-life-3d-demo-0004](https://github.com/user-attachments/assets/e51d3120-01f1-4e37-8058-44fcfc93c9a5)
+
+
 ## How to run
 
 After installing Rust and fulfilling any [system dependencies](https://bevyengine.org/learn/quick-start/getting-started/setup/#installing-os-dependencies), you should be able to:
