@@ -211,6 +211,16 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    // Camera
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_xyz((-(PLANE_SIZE * 2) as f32), 50.0, 0.)
+                .looking_at(Vec3::new(0., 0., 0.), Vec3::X),
+            ..Default::default()
+        },
+        FlyCam,
+    ));
+
     // Plane
     commands.spawn((PbrBundle {
         mesh: meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(PLANE_SIZE as f32))),
@@ -252,7 +262,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(PlayerPlugin)
+        .add_plugins(NoCameraPlayerPlugin)
         .insert_resource(Time::<Fixed>::from_duration(
             std::time::Duration::from_millis(TIME_STEP),
         ))
