@@ -3,5 +3,8 @@
     "rust-analyzer.cargo.extraEnv": {
         "RUSTFLAGS": "-Clinker=clang -Clink-arg=-fuse-ld=mold"
     },
+    "rust-analyzer.check.extraEnv": {
+        "RUSTFLAGS": "-Clinker=clang -Clink-arg=-fuse-ld=mold"
+    },
     "nixEnvSelector.nixFile": "${workspaceFolder}/shell.nix"
 }
