@@ -3,5 +3,5 @@ linker = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=mold"]
 
 [target.wasm32-unknown-unknown]
-linker = "ldd"
-rustflags = ["-C", "link-arg=-fuse-ld=ldd"]
+linker = "cc"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
