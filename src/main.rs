@@ -257,7 +257,7 @@ fn setup(
     // Camera
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_xyz(-(PLANE_SIZE * 2) as f32, 400.0, 0.)
+            transform: Transform::from_xyz(-(PLANE_SIZE * 2) as f32, 200.0, 0.)
                 .looking_at(Vec3::new(0., 0., 0.), Vec3::X),
             ..Default::default()
         },
